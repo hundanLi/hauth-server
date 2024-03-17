@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="/login.css">
+    <title>Login Page</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+<div class="language-selector">
+    <select id="language-select">
+        <option value="en">English</option>
+        <option value="zh">中文</option>
+    </select>
+</div>
+<div class="login-container">
+    <h2 data-en="Welcome! Please Login" data-zh="欢迎！请登录">Welcome! Please Login</h2>
+    <form action="/cas/login" method="post">
+        <div class="input-container">
+            <label for="username" data-en="Username" data-zh="用户名">Username</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div class="input-container">
+            <label for="password" data-en="Password" data-zh="密码">Password</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit" class="submit-btn" data-en="Login" data-zh="登录">Login</button>
+    </form>
+</div>
+<script src="/login.js"></script>
+</body>
+</html>
