@@ -22,6 +22,7 @@ import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Map;
 
 /**
  * @author hundanli
@@ -48,7 +49,9 @@ public class AuthorizedController {
     public Mono<String> index() {
         Assertion assertion = AssertionHolder.getAssertion();
         String user = assertion.getPrincipal().getName();
-        return Mono.just("Hello, " + user);
+        Map<String, Object> attributes = assertion.getPrincipal().getAttributes();
+        logger.info("user:{} login, attributes:{}", user, attributes);
+        return Mono.just("Hello, " + user + "!\n" + attributes);
     }
 
     @GetMapping("/authorized")

@@ -83,8 +83,8 @@ public class TicketStoreImpl implements TicketStore, HttpSessionListener {
 
     @Override
     public void invalidateTicketGrantTicket(String sessionId, String tgt) {
-        sessionTicketGrantTicketMap.remove(sessionId);
-        ticketGrantServiceTicketsMap.remove(tgt);
+        String ticketGrantTicket = sessionTicketGrantTicketMap.remove(sessionId);
+        ticketGrantServiceTicketsMap.remove(ticketGrantTicket);
         // todo Single Sign Out
     }
 
@@ -108,6 +108,8 @@ public class TicketStoreImpl implements TicketStore, HttpSessionListener {
         String sessionId = se.getSession().getId();
         String user = (String) se.getSession().getAttribute(SessionConstant.PRINCIPAL);
         log.info("http session destroyed, sessionid={}, user={}", sessionId, user);
+        this.invalidateTicketGrantTicket(sessionId, null);
+
     }
 
     class ServiceTicketExpireTask implements TimerTask {
@@ -124,7 +126,10 @@ public class TicketStoreImpl implements TicketStore, HttpSessionListener {
             if (!timeout.isCancelled()) {
                 serviceTicketServiceMap.remove(serviceTicket);
                 serviceTicketUserMap.remove(serviceTicket);
-                ticketGrantServiceTicketsMap.get(ticketGrantTicket).remove(serviceTicket);
+                Set<String> set = ticketGrantServiceTicketsMap.get(ticketGrantTicket);
+                if (set != null) {
+                    set.remove(serviceTicket);
+                }
             }
         }
     }

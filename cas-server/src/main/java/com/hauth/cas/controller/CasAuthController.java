@@ -2,7 +2,9 @@ package com.hauth.cas.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 import com.hauth.cas.constant.ErrorCodeConstant;
 import com.hauth.cas.constant.SessionConstant;
 import com.hauth.cas.dto.ServiceValidateDTO;
@@ -25,6 +27,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -105,9 +108,6 @@ public class CasAuthController {
                          HttpServletResponse response) throws IOException {
         HttpSession session = request.getSession();
         if (session != null) {
-            String sessionId = session.getId();
-            String tgc = getTgc(request);
-            ticketStore.invalidateTicketGrantTicket(sessionId, tgc);
             session.invalidate();
         }
         if (StringUtils.hasText(service)) {
@@ -120,7 +120,7 @@ public class CasAuthController {
     @GetMapping(path = {"serviceValidate", "p3/serviceValidate"})
     public String serviceValidate(@RequestParam("service") String service,
                                   @RequestParam("ticket") String ticket,
-                                  @RequestParam(value = "format", defaultValue = "XML") String format) throws JsonProcessingException {
+                                  @RequestParam(value = "format", defaultValue = "XML") String format) throws Exception {
         String user = ticketStore.retrieveUser(ticket);
         String relatedService = ticketStore.getRelatedService(ticket);
         ticketStore.invalidateServiceTicket(ticket);
@@ -130,12 +130,20 @@ public class CasAuthController {
         } else if (!Objects.equals(relatedService, service)) {
             result = ServiceValidateDTO.fail(ErrorCodeConstant.INVALID_SERVICE, " Service is invalid: " + service);
         } else {
-            result = ServiceValidateDTO.success(user, new HashMap<>(0));
+            Map<String, Object> attributes = new HashMap<>(2);
+            attributes.put("foo", "bar");
+            attributes.put("username", user);
+            result = ServiceValidateDTO.success(user, attributes);
         }
         if (XML.equals(format)) {
-            return xmlMapper.writeValueAsString(result);
+            String xml = result.serializeAsXml();
+            log.info("service validate xml response, user:{}, xml:\n {}", user, xml);
+            return xml;
         } else {
-            return jsonMapper.writeValueAsString(result);
+            jsonMapper.enable(SerializationFeature.INDENT_OUTPUT);
+            String json = jsonMapper.writeValueAsString(result.getServiceResponse());
+            log.info("service validate json response, user:{}, json:\n {}", user, json);
+            return json;
         }
     }
 
@@ -198,7 +206,7 @@ public class CasAuthController {
         for (Cookie cookie : cookies) {
             if (Objects.equals(cookie.getName(), TGC)) {
                 String ticketGrantTicket = ticketStore.getTicketGrantTicket(request.getSession(false).getId());
-                if (ticketGrantTicket != null) {
+                if (ticketGrantTicket != null && Objects.equals(cookie.getValue(), ticketGrantTicket)) {
                     return true;
                 }
             }
@@ -214,7 +222,7 @@ public class CasAuthController {
         for (Cookie cookie : cookies) {
             if (Objects.equals(cookie.getName(), TGC)) {
                 String ticketGrantTicket = ticketStore.getTicketGrantTicket(request.getSession(false).getId());
-                if (ticketGrantTicket != null) {
+                if (ticketGrantTicket != null  && Objects.equals(cookie.getValue(), ticketGrantTicket)) {
                     return ticketGrantTicket;
                 }
             }
