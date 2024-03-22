@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>用户授权</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f3f3f3;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 80%;
+      max-width: 500px;
+      padding: 2em;
+      background-color: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      margin-bottom: 1.5em;
+      text-align: center;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .scope-checkbox label {
+      margin-left: 10px;
+    }
+
+    .buttons {
+      width: 80%;
+      display: flex;
+      justify-content: space-around;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 10px 30px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    #agreeButton {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    #denyButton {
+      background-color: #f44336;
+      color: white;
+    }
+
+    #agreeButton:hover {
+      background-color: #45a049;
+    }
+
+    #denyButton:hover {
+      background-color: #d32f2f;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>用户授权</h2>
+  <p>{clientName}({clientUrl}) 想要访问您的个人信息</p>
+  <form id="consentForm" method="POST" action="/oauth2.0/consent">
+    <input type="hidden" id="consent" name="consent" value="">
+    <div class="buttons">
+      <button id="agreeButton" type="button" onclick="submitForm('allow')">同意</button>
+      <button id="denyButton" type="button" onclick="submitForm('deny')">拒绝</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  function submitForm(consentValue) {
+    document.getElementById('consent').value = consentValue;
+    document.getElementById('consentForm').submit();
+  }
+</script>
+</body>
+</html>

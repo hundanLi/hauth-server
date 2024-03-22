@@ -1,4 +1,6 @@
-package com.hauth.cas.ticket;
+package com.hauth.cas.auth.ticket;
+
+import com.hauth.cas.auth.Authentication;
 
 import java.util.List;
 
@@ -69,12 +71,12 @@ public interface TicketStore {
      * @param st ST
      * @return user
      */
-    String retrieveUser(String st);
+    Authentication retrieveAuthentication(String st);
 
     /**
      * 绑定登录用户
      * @param st ST
-     * @param user 用户名
+     * @param authentication 用户名
      */
-    void bindUser(String st, String user);
+    void bindAuthentication(String st, Authentication authentication);
 }

@@ -1,15 +1,15 @@
 package com.hauth.cas.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
+import com.hauth.cas.auth.Authentication;
+import com.hauth.cas.auth.AuthenticationManager;
+import com.hauth.cas.auth.impl.UserPasswordAuthentication;
+import com.hauth.cas.auth.ticket.TicketGenerator;
+import com.hauth.cas.auth.ticket.TicketStore;
+import com.hauth.cas.constant.AuthenticateConstant;
 import com.hauth.cas.constant.ErrorCodeConstant;
-import com.hauth.cas.constant.SessionConstant;
-import com.hauth.cas.dto.ServiceValidateDTO;
-import com.hauth.cas.ticket.TicketGenerator;
-import com.hauth.cas.ticket.TicketStore;
+import com.hauth.cas.dto.ServiceValidateFactory;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,8 +26,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -40,16 +38,8 @@ import java.util.Objects;
 @RequestMapping("/cas")
 public class CasAuthController {
 
-    private static final String TGC = "TGC";
-    private String user = "admin";
-    private String pass = "123456";
-
-    private String SERVICE = "service";
-    private String REDIRECT = "redirect";
-
-    private String JSON = "JSON";
-    private String XML = "XML";
-
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
     @Autowired
     private TicketStore ticketStore;
@@ -57,9 +47,8 @@ public class CasAuthController {
     @Autowired
     private TicketGenerator ticketGenerator;
 
-    private ObjectMapper jsonMapper = new ObjectMapper();
+    private final ObjectMapper jsonMapper = new ObjectMapper();
 
-    private XmlMapper xmlMapper = new XmlMapper();
 
     @CrossOrigin(origins = "*", allowedHeaders = "*", exposedHeaders = "*", methods = RequestMethod.GET)
     @GetMapping("login")
@@ -67,16 +56,16 @@ public class CasAuthController {
                         HttpServletRequest request,
                         @RequestParam(value = "service", required = false) String service,
                         @RequestParam(value = "redirect", defaultValue = "true") Boolean redirect) throws IOException {
-        if (hasLogin(request)) {
-            String user = (String) request.getSession(false).getAttribute(SessionConstant.PRINCIPAL);
-            return grantTicketAndRedirect(service, true, response, request, user);
+        if (authenticationManager.hasLogin(request)) {
+            Authentication authentication = (Authentication) request.getSession(false).getAttribute(AuthenticateConstant.PRINCIPAL);
+            return grantTicketAndRedirect(service, true, response, request, authentication);
         } else {
             HttpSession httpSession = request.getSession(true);
             if (StringUtils.hasText(service)) {
-                httpSession.setAttribute(SERVICE, service);
+                httpSession.setAttribute(AuthenticateConstant.SERVICE, service);
             }
             if (redirect != null) {
-                httpSession.setAttribute(REDIRECT, redirect);
+                httpSession.setAttribute(AuthenticateConstant.REDIRECT, redirect);
             }
             renderCasLoginPage(response);
             return "redirect to login";
@@ -91,11 +80,12 @@ public class CasAuthController {
                             @RequestParam(value = "redirect", defaultValue = "true") Boolean redirect,
                             HttpServletResponse response,
                             HttpServletRequest request) throws IOException {
-        if (hasLogin(request)) {
+        if (authenticationManager.hasLogin(request)) {
             return "You have login successfully!";
         }
-        if (user.equals(username) && pass.equals(password)) {
-            return grantTicketAndRedirect(service, redirect, response, request, username);
+        Authentication authentication = new UserPasswordAuthentication(username, password);
+        if (authenticationManager.authenticate(authentication).isAuthenticated()) {
+            return grantTicketAndRedirect(service, redirect, response, request, authentication);
         } else {
             return "Invalid credentials!";
         }
@@ -121,28 +111,25 @@ public class CasAuthController {
     public String serviceValidate(@RequestParam("service") String service,
                                   @RequestParam("ticket") String ticket,
                                   @RequestParam(value = "format", defaultValue = "XML") String format) throws Exception {
-        String user = ticketStore.retrieveUser(ticket);
+        Authentication authentication = ticketStore.retrieveAuthentication(ticket);
         String relatedService = ticketStore.getRelatedService(ticket);
         ticketStore.invalidateServiceTicket(ticket);
-        ServiceValidateDTO result;
+        ServiceValidateFactory result;
         if (relatedService == null) {
-            result = ServiceValidateDTO.fail(ErrorCodeConstant.INVALID_TICKET, " Service Ticket is invalid: " + ticket);
+            result = ServiceValidateFactory.fail(ErrorCodeConstant.INVALID_TICKET, " Service Ticket is invalid: " + ticket);
         } else if (!Objects.equals(relatedService, service)) {
-            result = ServiceValidateDTO.fail(ErrorCodeConstant.INVALID_SERVICE, " Service is invalid: " + service);
+            result = ServiceValidateFactory.fail(ErrorCodeConstant.INVALID_SERVICE, " Service is invalid: " + service);
         } else {
-            Map<String, Object> attributes = new HashMap<>(2);
-            attributes.put("foo", "bar");
-            attributes.put("username", user);
-            result = ServiceValidateDTO.success(user, attributes);
+            result = ServiceValidateFactory.success(authentication.getPrincipal(), authentication.getAttributes());
         }
-        if (XML.equals(format)) {
+        if (AuthenticateConstant.XML.equals(format)) {
             String xml = result.serializeAsXml();
-            log.info("service validate xml response, user:{}, xml:\n {}", user, xml);
+            log.info("service validate xml response, user:{}, xml:\n {}", authentication.getPrincipal(), xml);
             return xml;
         } else {
             jsonMapper.enable(SerializationFeature.INDENT_OUTPUT);
             String json = jsonMapper.writeValueAsString(result.getServiceResponse());
-            log.info("service validate json response, user:{}, json:\n {}", user, json);
+            log.info("service validate json response, user:{}, json:\n {}", authentication.getPrincipal(), json);
             return json;
         }
     }
@@ -159,33 +146,33 @@ public class CasAuthController {
 
     private String grantTicketAndRedirect(String service, Boolean redirect,
                                           HttpServletResponse response, HttpServletRequest request,
-                                          String user) throws IOException {
+                                          Authentication authentication) throws IOException {
         HttpSession session = request.getSession(true);
         if (!StringUtils.hasText(service)) {
-            service = (String) session.getAttribute(SERVICE);
-            request.getSession().removeAttribute(SERVICE);
+            service = (String) session.getAttribute(AuthenticateConstant.SERVICE);
+            request.getSession().removeAttribute(AuthenticateConstant.SERVICE);
         }
         if (redirect == null) {
-            redirect = Boolean.parseBoolean(session.getAttribute(REDIRECT) + "");
-            request.getSession().removeAttribute(REDIRECT);
+            redirect = Boolean.parseBoolean(session.getAttribute(AuthenticateConstant.REDIRECT) + "");
+            request.getSession().removeAttribute(AuthenticateConstant.REDIRECT);
         }
-        String ticketGrantTicket = getTgc(request);
+        String ticketGrantTicket = authenticationManager.getTicketGrantCookie(request);
         if (ticketGrantTicket == null) {
             ticketGrantTicket = ticketGenerator.generateTicketGrantTicket();
-            Cookie cookie = new Cookie(TGC, ticketGrantTicket);
+            Cookie cookie = new Cookie(AuthenticateConstant.COOKIE_TGC, ticketGrantTicket);
             cookie.setHttpOnly(true);
             cookie.setPath("/");
             response.addCookie(cookie);
             String sessionId = session.getId();
-            session.setAttribute(SessionConstant.PRINCIPAL, user);
+            session.setAttribute(AuthenticateConstant.PRINCIPAL, authentication);
             ticketStore.setTicketGrantTicket(sessionId, ticketGrantTicket);
         }
 
         if (StringUtils.hasText(service)) {
             String serviceTicket = ticketGenerator.generateServiceTicket(ticketGrantTicket);
             ticketStore.addServiceTicket(serviceTicket, ticketGrantTicket, service);
-            if (StringUtils.hasText(user)) {
-                ticketStore.bindUser(serviceTicket, user);
+            if (Objects.nonNull(authentication)) {
+                ticketStore.bindAuthentication(serviceTicket, authentication);
             }
             if (redirect) {
                 redirectToService(service, serviceTicket, response);
@@ -198,37 +185,6 @@ public class CasAuthController {
         }
     }
 
-    private boolean hasLogin(HttpServletRequest request) {
-        if (request.getSession(false) == null) {
-            return false;
-        }
-        Cookie[] cookies = request.getCookies();
-        for (Cookie cookie : cookies) {
-            if (Objects.equals(cookie.getName(), TGC)) {
-                String ticketGrantTicket = ticketStore.getTicketGrantTicket(request.getSession(false).getId());
-                if (ticketGrantTicket != null && Objects.equals(cookie.getValue(), ticketGrantTicket)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private String getTgc(HttpServletRequest request) {
-        if (request.getSession(false) == null) {
-            return null;
-        }
-        Cookie[] cookies = request.getCookies();
-        for (Cookie cookie : cookies) {
-            if (Objects.equals(cookie.getName(), TGC)) {
-                String ticketGrantTicket = ticketStore.getTicketGrantTicket(request.getSession(false).getId());
-                if (ticketGrantTicket != null  && Objects.equals(cookie.getValue(), ticketGrantTicket)) {
-                    return ticketGrantTicket;
-                }
-            }
-        }
-        return null;
-    }
 
     private void renderCasLoginPage(HttpServletResponse response) throws IOException {
         ClassPathResource resource = new ClassPathResource("static/login.html");
@@ -243,7 +199,11 @@ public class CasAuthController {
     private void redirectToService(String serviceUrl, String serviceTicket, HttpServletResponse response) throws IOException {
         String redirectUrl = serviceUrl;
         if (StringUtils.hasText(serviceTicket)) {
-            redirectUrl = serviceUrl + "?ticket=" + serviceTicket;
+            if (serviceUrl.contains("?")) {
+                redirectUrl = serviceUrl + "&ticket=" + serviceTicket;
+            } else {
+                redirectUrl = serviceUrl + "?ticket=" + serviceTicket;
+            }
         }
         log.info("send redirect to serviceUrl: {}", redirectUrl);
         response.sendRedirect(redirectUrl);

@@ -1,6 +1,5 @@
 package com.hauth.cas.dto;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import org.dom4j.Document;
 import org.dom4j.Element;
@@ -18,12 +17,12 @@ import java.util.Map;
  * @date 2024/3/15 19:24
  */
 @Data
-public class ServiceValidateDTO {
+public class ServiceValidateFactory {
 
     private ServiceResponse serviceResponse;
 
 
-    public static ServiceValidateDTO success(String user, Map<String, Object> attributes) {
+    public static ServiceValidateFactory success(String user, Map<String, Object> attributes) {
         AuthenticationSuccess success = new AuthenticationSuccess();
         success.setUser(user);
         Map<String, Object> attributeMap = new HashMap<>(attributes.size());
@@ -33,20 +32,20 @@ public class ServiceValidateDTO {
         success.setAttributes(attributeMap);
         ServiceResponse response = new ServiceResponse();
         response.setAuthenticationSuccess(success);
-        ServiceValidateDTO serviceValidateDTO = new ServiceValidateDTO();
-        serviceValidateDTO.setServiceResponse(response);
-        return serviceValidateDTO;
+        ServiceValidateFactory serviceValidateFactory = new ServiceValidateFactory();
+        serviceValidateFactory.setServiceResponse(response);
+        return serviceValidateFactory;
     }
 
-    public static ServiceValidateDTO fail(String errorCode, String description) {
+    public static ServiceValidateFactory fail(String errorCode, String description) {
         AuthenticationFailure failure = new AuthenticationFailure();
         failure.setCode(errorCode);
         failure.setDescription(description);
         ServiceResponse response = new ServiceResponse();
         response.setAuthenticationFailure(failure);
-        ServiceValidateDTO serviceValidateDTO = new ServiceValidateDTO();
-        serviceValidateDTO.setServiceResponse(response);
-        return serviceValidateDTO;
+        ServiceValidateFactory serviceValidateFactory = new ServiceValidateFactory();
+        serviceValidateFactory.setServiceResponse(response);
+        return serviceValidateFactory;
     }
 
 
@@ -93,23 +92,10 @@ public class ServiceValidateDTO {
         }
     }
 
-    @Data
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    static class ServiceResponse {
-        AuthenticationSuccess authenticationSuccess;
-        AuthenticationFailure authenticationFailure;
-    }
 
-    @Data
-    static class AuthenticationSuccess {
-        String user;
-        Map<String, Object> attributes;
-    }
 
-    @Data
-    static class AuthenticationFailure {
-        String code;
-        String description;
-    }
+
+
+
 
 }

@@ -1,4 +1,4 @@
-package com.hauth.cas.ticket;
+package com.hauth.cas.auth.ticket;
 
 /**
  * @author hundanli

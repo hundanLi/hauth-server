@@ -1,7 +1,8 @@
-package com.hauth.cas.ticket.impl;
+package com.hauth.cas.auth.ticket.impl;
 
-import com.hauth.cas.constant.SessionConstant;
-import com.hauth.cas.ticket.TicketStore;
+import com.hauth.cas.auth.Authentication;
+import com.hauth.cas.constant.AuthenticateConstant;
+import com.hauth.cas.auth.ticket.TicketStore;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
 import io.netty.util.TimerTask;
@@ -34,7 +35,7 @@ public class TicketStoreImpl implements TicketStore, HttpSessionListener {
 
     private final Map<String, Set<String>> ticketGrantServiceTicketsMap = new ConcurrentHashMap<>();
 
-    private final Map<String, String> serviceTicketUserMap = new ConcurrentHashMap<>();
+    private final Map<String, Authentication> serviceTicketUserMap = new ConcurrentHashMap<>();
 
     private final HashedWheelTimer wheelTimer = new HashedWheelTimer();
 
@@ -89,12 +90,12 @@ public class TicketStoreImpl implements TicketStore, HttpSessionListener {
     }
 
     @Override
-    public String retrieveUser(String st) {
+    public Authentication retrieveAuthentication(String st) {
         return serviceTicketUserMap.get(st);
     }
 
     @Override
-    public void bindUser(String st, String user) {
+    public void bindAuthentication(String st, Authentication user) {
         serviceTicketUserMap.put(st, user);
     }
 
@@ -106,8 +107,8 @@ public class TicketStoreImpl implements TicketStore, HttpSessionListener {
     @Override
     public void sessionDestroyed(HttpSessionEvent se) {
         String sessionId = se.getSession().getId();
-        String user = (String) se.getSession().getAttribute(SessionConstant.PRINCIPAL);
-        log.info("http session destroyed, sessionid={}, user={}", sessionId, user);
+        Authentication authentication = (Authentication) se.getSession().getAttribute(AuthenticateConstant.PRINCIPAL);
+        log.info("http session destroyed, sessionid={}, user={}", sessionId, authentication.getPrincipal());
         this.invalidateTicketGrantTicket(sessionId, null);
 
     }

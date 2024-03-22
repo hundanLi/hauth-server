@@ -1,6 +1,6 @@
-package com.hauth.cas.ticket.impl;
+package com.hauth.cas.auth.ticket.impl;
 
-import com.hauth.cas.ticket.TicketGenerator;
+import com.hauth.cas.auth.ticket.TicketGenerator;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
