@@ -24,18 +24,24 @@ public interface AuthorizationCodeManager {
 
     /**
      * 保存PKCE
-     * @param clientId 客户端id
+     * @param code 授权码
      * @param codeChallenge codeChallenge密文
      * @param codeChallengeMethod hash algo
      */
-    void setCodeChallenge(String clientId, String codeChallenge, String codeChallengeMethod);
+    void setCodeChallenge(String code, String codeChallenge, String codeChallengeMethod);
 
     /**
      * 校验PKCE
-     * @param clientId 客户端id
+     * @param code 授权码
      * @param codeVerifier codeChallenge明文
      * @return 合法性
      */
-    boolean checkCodeVerifier(String clientId, String codeVerifier);
+    boolean checkCodeVerifier(String code, String codeVerifier);
 
+
+    /**
+     * 删除code
+     * @param code 授权码
+     */
+    void removeCode(String code);
 }

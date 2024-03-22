@@ -19,6 +19,9 @@ public class OAuthProperties {
     private String clientSecret;
     private String redirectUri;
 
-    private String authFlag = "AUTHENTICATION";
+    private String authName = "AUTHENTICATION";
+    private String stateName = "state";
+    private String codeChallengeName = "code_challenge";
+    private String codeVerifierName = "code_verifier";
 
 }

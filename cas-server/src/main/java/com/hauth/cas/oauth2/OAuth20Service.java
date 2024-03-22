@@ -2,6 +2,7 @@ package com.hauth.cas.oauth2;
 
 import com.hauth.cas.client.AuthClient;
 import com.hauth.cas.client.AuthClientStore;
+import com.hauth.cas.oauth2.config.OAuth20Constant;
 import com.hauth.cas.oauth2.config.OAuth20GrantType;
 import com.hauth.cas.oauth2.dto.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -70,11 +71,15 @@ public class OAuth20Service {
             // 持久化保存授权同意信息
             authorizationConsentManager.saveConsent(authorizeRequest);
             String code = authorizationCodeManager.generateCode(authorizeRequest.getClientId());
+            // state 和 code_challenge
+            if (authorizeRequest.getCodeChallenge() != null) {
+                authorizationCodeManager.setCodeChallenge(authorizeRequest.getClientId(), authorizeRequest.getCodeChallenge(), authorizeRequest.getCodeChallengeMethod());
+            }
             AuthorizeConsent consent = AuthorizeConsent.builder()
                     .clientId(authorizeRequest.getClientId())
                     .scope(authorizeRequest.getScope())
                     .user(authorizeRequest.getUser())
-                    .attributes(authorizeRequest.getUserAttributes())
+                    .userAttributes(authorizeRequest.getUserAttributes())
                     .build();
             // 映射code->consent，用于后续token接口校验
             authorizationConsentManager.setConsent(code, consent);
@@ -116,9 +121,17 @@ public class OAuth20Service {
         if (!Objects.equals(authClient.getRedirectUri(), authorizeRequest.getRedirectUri())) {
             throw new IllegalArgumentException("Invalid redirect_uri: " + authorizeRequest.getRedirectUri());
         }
-        // state 和 code_challenge
-        if (authorizeRequest.getCodeChallenge() != null && authorizeRequest.getCodeChallengeMethod() != null) {
-            authorizationCodeManager.setCodeChallenge(authorizeRequest.getClientId(), authorizeRequest.getCodeChallenge(), authorizeRequest.getCodeChallengeMethod());
+        if (authorizeRequest.getCodeChallenge() != null) {
+            String challengeMethod = authorizeRequest.getCodeChallengeMethod();
+            if (challengeMethod != null) {
+                if (OAuth20Constant.PKCE_METHOD_PLAIN.equals(challengeMethod)) {
+                    return;
+                }
+                if (OAuth20Constant.PKCE_METHOD_S256.equals(challengeMethod)) {
+                    return;
+                }
+                throw new IllegalArgumentException("unsupported challenge method: " + authorizeRequest.getCodeChallengeMethod());
+            }
         }
 
     }
@@ -141,7 +154,7 @@ public class OAuth20Service {
                 throw new IllegalArgumentException("Invalid authorization_code: " + tokenRequest.getCode());
             }
             if (tokenRequest.getCodeVerifier() != null) {
-                if (!authorizationCodeManager.checkCodeVerifier(tokenRequest.getClientId(), tokenRequest.getCodeVerifier())) {
+                if (!authorizationCodeManager.checkCodeVerifier(tokenRequest.getCode(), tokenRequest.getCodeVerifier())) {
                     throw new IllegalArgumentException("Invalid code_verifier: " + tokenRequest.getCodeVerifier());
                 }
             }

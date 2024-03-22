@@ -10,4 +10,7 @@ public interface OAuth20Constant {
     String CLIENT_NAME = "{clientName}";
     String CLIENT_URL = "{clientUrl}";
 
+    String PKCE_METHOD_PLAIN = "plain";
+    String PKCE_METHOD_S256 = "S256";
+
 }

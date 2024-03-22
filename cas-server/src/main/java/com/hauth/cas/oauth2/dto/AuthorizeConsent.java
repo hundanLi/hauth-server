@@ -21,6 +21,6 @@ public class AuthorizeConsent {
     private String clientId;
     private String user;
     private String scope;
-    private Map<String, Object> attributes;
+    private Map<String, Object> userAttributes;
 
 }

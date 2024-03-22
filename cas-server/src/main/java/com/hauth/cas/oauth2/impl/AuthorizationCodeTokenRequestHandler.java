@@ -1,5 +1,6 @@
 package com.hauth.cas.oauth2.impl;
 
+import com.hauth.cas.oauth2.AuthorizationCodeManager;
 import com.hauth.cas.oauth2.AuthorizationConsentManager;
 import com.hauth.cas.oauth2.config.OAuth20GrantType;
 import com.hauth.cas.oauth2.dto.AccessTokenRequest;
@@ -20,6 +21,9 @@ public class AuthorizationCodeTokenRequestHandler extends AbstractTokenRequestHa
     @Autowired
     private AuthorizationConsentManager authorizationConsentManager;
 
+    @Autowired
+    private AuthorizationCodeManager authorizationCodeManager;
+
     @Override
     public boolean supports(String grantType) {
         return OAuth20GrantType.GRANT_TYPE_AUTHORIZATION_CODE.equals(grantType);
@@ -32,11 +36,12 @@ public class AuthorizationCodeTokenRequestHandler extends AbstractTokenRequestHa
             throw new IllegalArgumentException("Invalid code: " + accessTokenRequest.getCode());
         }
         authorizationConsentManager.removeConsent(accessTokenRequest.getCode());
+        authorizationCodeManager.removeCode(accessTokenRequest.getCode());
         String user = consent.getUser();
         return UserProfile.builder()
                 .id(user)
                 .principal(user)
-                .attributes(consent.getAttributes())
+                .attributes(consent.getUserAttributes())
                 .build();
     }
 }

@@ -24,6 +24,7 @@ import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Objects;
 
 /**
  * @author hundanli
@@ -53,9 +54,18 @@ public class OAuthCallbackController {
     @GetMapping("/")
     public Mono<String> authorized(@RequestParam(value = "code", required = false) String code,
                                    @RequestParam(value = "error", required = false) String error,
+                                   @RequestParam(value = "state", required = false) String state,
                                    HttpServletRequest request) {
+        logger.info("authorized callback, code={}, state={}", code, state);
         if (code == null) {
             return Mono.just("Server Error: " + error);
+        }
+        if (state != null) {
+            Object stateVal = request.getSession(true).getAttribute(oAuthProperties.getStateName());
+            if (!Objects.equals(state, stateVal)) {
+                logger.error("state is recognized: {}", state);
+                return Mono.just("state is recognized:" + state);
+            }
         }
         String clientId = oAuthProperties.getClientId();
         String clientSecret = oAuthProperties.getClientSecret();
@@ -67,9 +77,9 @@ public class OAuthCallbackController {
         formData.add("code", code);
         formData.add("client_id", clientId);
         formData.add("client_secret", clientSecret);
-
+        String codeVerifier = (String) request.getSession().getAttribute(oAuthProperties.getCodeVerifierName());
         return webClient.post()
-                .uri("/oauth2.0/token")
+                .uri("/oauth2.0/token" + "?code_verifier=" + codeVerifier)
                 .header(HttpHeaders.AUTHORIZATION, "Basic " + base64Credentials)
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters.fromFormData(formData))
@@ -81,13 +91,14 @@ public class OAuthCallbackController {
                         // 解析出access_token并请求/userinfo接口获取信息
                         AccessTokenDTO accessTokenDTO = objectMapper.readValue(json, AccessTokenDTO.class);
                         String accessToken = accessTokenDTO.getAccessToken();
+                        String uri = "/oauth2.0/profile?access_token=" + accessToken;
 //                        parseClaims(accessToken);
-                        return webClient.get().uri("/oauth2.0/profile?access_token=" + accessToken)
+                        return webClient.get().uri(uri)
                                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                                 .retrieve()
                                 .bodyToMono(String.class)
                                 .doOnSuccess(str -> {
-                                    request.getSession(false).setAttribute(oAuthProperties.getAuthFlag(), str);
+                                    request.getSession(false).setAttribute(oAuthProperties.getAuthName(), str);
                                 });
 
                     } catch (JsonProcessingException e) {
