@@ -3,6 +3,7 @@ package com.hauth.cas.oauth2.impl;
 import com.hauth.cas.oauth2.TokenManager;
 import com.hauth.cas.oauth2.TokenRequestHandler;
 import com.hauth.cas.oauth2.TokenStorage;
+import com.hauth.cas.oauth2.config.OAuth20Properties;
 import com.hauth.cas.oauth2.dto.AccessToken;
 import com.hauth.cas.oauth2.dto.AccessTokenRequest;
 import com.hauth.cas.oauth2.dto.UserProfile;
@@ -23,6 +24,9 @@ public abstract class AbstractTokenRequestHandler implements TokenRequestHandler
     @Autowired
     private TokenStorage tokenStorage;
 
+    @Autowired
+    private OAuth20Properties oAuth20Properties;
+
     protected AccessToken generateToken(UserProfile userProfile) {
         String accessToken = tokenManager.generateAccessToken(userProfile);
         String refreshToken = tokenManager.generateRefreshToken(userProfile);
@@ -33,7 +37,7 @@ public abstract class AbstractTokenRequestHandler implements TokenRequestHandler
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .tokenType(TokenManager.BEARER)
-                .expiresIn(TokenManager.EXPIRES_IN)
+                .expiresIn((int) oAuth20Properties.getTokenTimeout().getSeconds())
                 .build();
     }
 

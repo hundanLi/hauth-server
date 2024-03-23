@@ -145,6 +145,7 @@ public class OAuth20Controller {
     public AccessToken accessToken(@RequestParam("grant_type") String grantType,
                                    @RequestParam("client_id") String clientId,
                                    @RequestParam("client_secret") String clientSecret,
+                                   @RequestParam(value = "refresh_token", required = false) String refreshToken,
                                    @RequestParam(value = "redirect_uri", required = false) String redirectUri,
                                    @RequestParam(value = "code", required = false) String code,
                                    @RequestParam(value = "code_verifier", required = false) String codeVerifier,
@@ -153,6 +154,7 @@ public class OAuth20Controller {
         AccessTokenRequest accessTokenRequest = AccessTokenRequest.builder()
                 .clientId(clientId)
                 .clientSecret(clientSecret)
+                .refreshToken(refreshToken)
                 .grantType(grantType)
                 .redirectUri(redirectUri)
                 .code(code)

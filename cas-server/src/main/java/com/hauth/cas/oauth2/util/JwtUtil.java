@@ -1,9 +1,6 @@
 package com.hauth.cas.oauth2.util;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -37,8 +34,11 @@ public class JwtUtil {
                     .build()
                     .parseClaimsJws(jws);
             return claimsJws.getBody();
+        } catch (ExpiredJwtException expiredJwtException) {
+            log.error("token expired: {}", expiredJwtException.getMessage());
+            throw new IllegalArgumentException("Expired token: " + jws);
         } catch (Exception exception) {
-            log.error("parse jwt token error: {}", exception.getMessage());
+            log.error("token invalid: {}", exception.getMessage());
             throw new IllegalArgumentException("Invalid token: " + jws);
         }
     }

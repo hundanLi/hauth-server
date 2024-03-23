@@ -24,4 +24,5 @@ public class AccessTokenRequest {
     private String codeVerifier;
     private String username;
     private String password;
+    private String refreshToken;
 }

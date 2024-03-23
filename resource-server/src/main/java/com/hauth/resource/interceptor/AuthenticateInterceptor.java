@@ -43,12 +43,14 @@ public class AuthenticateInterceptor implements HandlerInterceptor {
 
         if (session.getAttribute(oAuthProperties.getAuthName()) != null) {
             // 已登录
+            log.info("authorized request: {}", request.getRequestURI());
             return true;
         }
         String requestUri = request.getRequestURI();
         if (ROOT.equals(requestUri)) {
             if (Objects.equals(session.getAttribute(SESSION_STATE), STATE_CALLBACK)) {
                 // oauth callback
+                log.info("oauth callback, remove {} attribute.", SESSION_STATE);
                 session.removeAttribute(SESSION_STATE);
                 return true;
             }

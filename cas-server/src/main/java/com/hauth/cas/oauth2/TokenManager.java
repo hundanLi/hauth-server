@@ -12,7 +12,6 @@ public interface TokenManager {
     String AT_PREFIX = "AT-";
     String RT_PREFIX = "RT-";
     String BEARER = "Bearer";
-    Integer EXPIRES_IN = 7200;
 
     /**
      * 生成accessToken

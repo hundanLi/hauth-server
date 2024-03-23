@@ -92,8 +92,8 @@ public class OAuth20Service {
             }
             return callbackUri;
         } else {
-            log.error("use rejected authorization request for client_id:{}", authorizeRequest.getClientId());
-            String callbackUri = authorizeRequest.getRedirectUri() + "?error=" + "user_rejected";
+            log.error("use denied authorization request for client_id:{}", authorizeRequest.getClientId());
+            String callbackUri = authorizeRequest.getRedirectUri() + "?error=" + "access_denied";
             if (authorizeRequest.getState() != null) {
                 callbackUri += ("&state=" + authorizeRequest.getState());
             }
@@ -179,9 +179,13 @@ public class OAuth20Service {
 
 
     public UserProfile userProfile(String accessToken) {
-        if (tokenManager.validateAccessToken(accessToken)==null) {
+        if (tokenManager.validateAccessToken(accessToken) == null) {
             throw new IllegalArgumentException("Invalid access_token: " + accessToken);
         }
-        return tokenStorage.getUserProfileByToken(accessToken);
+        UserProfile profile = tokenStorage.getUserProfileByToken(accessToken);
+        if (profile == null) {
+            throw new IllegalArgumentException("Expired access_token: " + accessToken);
+        }
+        return profile;
     }
 }

@@ -56,16 +56,21 @@ public class OAuthCallbackController {
                                    @RequestParam(value = "error", required = false) String error,
                                    @RequestParam(value = "state", required = false) String state,
                                    HttpServletRequest request) {
-        logger.info("authorized callback, code={}, state={}", code, state);
-        if (code == null) {
-            return Mono.just("Server Error: " + error);
+        if (state == null) {
+            Object authentication = request.getSession().getAttribute(oAuthProperties.getAuthName());
+            return Mono.just("authorized: " + authentication);
         }
-        if (state != null) {
-            Object stateVal = request.getSession(true).getAttribute(oAuthProperties.getStateName());
-            if (!Objects.equals(state, stateVal)) {
-                logger.error("state is recognized: {}", state);
-                return Mono.just("state is recognized:" + state);
-            }
+        logger.info("authorized callback, code={}, state={}", code, state);
+        if (error != null) {
+            return Mono.just("Authorize error: " + error);
+        }
+        if (code == null) {
+            return Mono.just("Invalid request, parameter: code is null");
+        }
+        Object stateVal = request.getSession(true).getAttribute(oAuthProperties.getStateName());
+        if (!Objects.equals(state, stateVal)) {
+            logger.error("state is recognized: {}", state);
+            return Mono.just("state is recognized:" + state);
         }
         String clientId = oAuthProperties.getClientId();
         String clientSecret = oAuthProperties.getClientSecret();

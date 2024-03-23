@@ -18,6 +18,7 @@
 - Resource Owner
 - Client Credentials
 - JWT Token
+- User Consent
 
 3.In-Memory Storage Component 
 

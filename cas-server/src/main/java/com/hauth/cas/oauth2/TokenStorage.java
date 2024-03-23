@@ -12,20 +12,38 @@ public interface TokenStorage {
 
     /**
      * 保存accessToken
+     *
      * @param accessToken token
      * @param userProfile 用户信息
      */
     void saveAccessToken(String accessToken, UserProfile userProfile);
 
     /**
+     * 移除accessToken
+     *
+     * @param accessToken token
+     */
+    void removeAccessToken(String accessToken);
+
+    /**
      * 保存refreshToken
+     *
      * @param refreshToken refreshToken
-     * @param userProfile 用户信息
+     * @param userProfile  用户信息
      */
     void saveRefreshToken(String refreshToken, UserProfile userProfile);
 
+
+    /**
+     * 移除refreshToken
+     *
+     * @param refreshToken token
+     */
+    void removeRefreshToken(String refreshToken);
+
     /**
      * 获取用户
+     *
      * @param accessToken token
      * @return 用户信息
      */
