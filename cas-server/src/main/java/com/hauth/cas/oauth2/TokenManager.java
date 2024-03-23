@@ -7,7 +7,7 @@ import com.hauth.cas.oauth2.dto.UserProfile;
  * @version 1.0.0
  * @date 2024/3/19 20:11
  */
-public interface TokenGenerator {
+public interface TokenManager {
 
     String AT_PREFIX = "AT-";
     String RT_PREFIX = "RT-";
@@ -29,4 +29,17 @@ public interface TokenGenerator {
      */
     String generateRefreshToken(UserProfile userProfile);
 
+    /**
+     * 校验accessToken
+     * @param accessToken token
+     * @return 用户信息
+     */
+    UserProfile validateAccessToken(String accessToken);
+
+    /**
+     * 校验refreshToken
+     * @param refreshToken token
+     * @return 用户信息
+     */
+    UserProfile validateRefreshToken(String refreshToken);
 }

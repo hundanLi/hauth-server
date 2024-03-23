@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
  * @date 2024/3/22 11:23
  */
 @Service
-public class ClientCredentialTokenRequestHandler extends AbstractTokenRequestHandler{
+public class ClientCredentialTokenRequestHandler extends AbstractTokenRequestHandler {
     @Override
     public boolean supports(String grantType) {
         return OAuth20GrantType.GRANT_TYPE_CLIENT_CREDENTIALS.equals(grantType);

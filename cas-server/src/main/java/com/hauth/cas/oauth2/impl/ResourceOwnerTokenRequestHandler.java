@@ -38,6 +38,7 @@ public class ResourceOwnerTokenRequestHandler extends AbstractTokenRequestHandle
         }
         return UserProfile.builder()
                 .id(username)
+                .clientId(accessTokenRequest.getClientId())
                 .principal(username)
                 .attributes(authentication.getAttributes())
                 .build();

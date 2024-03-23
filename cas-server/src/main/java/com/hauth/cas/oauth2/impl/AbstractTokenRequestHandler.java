@@ -1,6 +1,6 @@
 package com.hauth.cas.oauth2.impl;
 
-import com.hauth.cas.oauth2.TokenGenerator;
+import com.hauth.cas.oauth2.TokenManager;
 import com.hauth.cas.oauth2.TokenRequestHandler;
 import com.hauth.cas.oauth2.TokenStorage;
 import com.hauth.cas.oauth2.dto.AccessToken;
@@ -18,22 +18,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 public abstract class AbstractTokenRequestHandler implements TokenRequestHandler {
 
     @Autowired
-    private TokenGenerator tokenGenerator;
+    private TokenManager tokenManager;
 
     @Autowired
     private TokenStorage tokenStorage;
 
     protected AccessToken generateToken(UserProfile userProfile) {
-        String accessToken = tokenGenerator.generateAccessToken(userProfile);
-        String refreshToken = tokenGenerator.generateRefreshToken(userProfile);
+        String accessToken = tokenManager.generateAccessToken(userProfile);
+        String refreshToken = tokenManager.generateRefreshToken(userProfile);
         tokenStorage.saveAccessToken(accessToken, userProfile);
         tokenStorage.saveRefreshToken(refreshToken, userProfile);
 
         return AccessToken.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
-                .tokenType(TokenGenerator.BEARER)
-                .expiresIn(TokenGenerator.EXPIRES_IN)
+                .tokenType(TokenManager.BEARER)
+                .expiresIn(TokenManager.EXPIRES_IN)
                 .build();
     }
 

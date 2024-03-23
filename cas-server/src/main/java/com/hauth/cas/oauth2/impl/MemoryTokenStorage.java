@@ -1,5 +1,6 @@
 package com.hauth.cas.oauth2.impl;
 
+import com.hauth.cas.oauth2.TokenManager;
 import com.hauth.cas.oauth2.TokenStorage;
 import com.hauth.cas.oauth2.dto.UserProfile;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +32,11 @@ public class MemoryTokenStorage implements TokenStorage {
     }
 
     @Override
-    public UserProfile getUserProfileByToken(String accessToken) {
-        return accessTokenUserMap.get(accessToken);
+    public UserProfile getUserProfileByToken(String token) {
+        if (token.startsWith(TokenManager.AT_PREFIX)) {
+            return accessTokenUserMap.get(token);
+        } else {
+            return refreshTokenUserMap.get(token);
+        }
     }
 }

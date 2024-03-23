@@ -85,6 +85,10 @@ public class OAuthCallbackController {
                 .body(BodyInserters.fromFormData(formData))
                 .retrieve()
                 .bodyToMono(String.class)
+                .doOnError(throwable -> {
+                    logger.error("request error: {}", throwable.getMessage());
+                })
+                .onErrorReturn("OAuth Server Error")
                 .flatMap(json -> {
                     try {
                         logger.info("token str: {}", json);

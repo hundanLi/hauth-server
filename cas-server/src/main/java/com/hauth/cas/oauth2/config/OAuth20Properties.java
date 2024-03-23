@@ -4,6 +4,8 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+
 /**
  * @author hundanli
  * @version 1.0.0
@@ -28,4 +30,8 @@ public class OAuth20Properties {
 
     private String authLoginUri = "/cas/login";
     private String authValidateUri = "/cas/p3/serviceValidate";
+
+    private String tokenSecret;
+    private Duration tokenTimeout = Duration.ofDays(3);
+    private Duration refreshTimeout = Duration.ofDays(30);
 }

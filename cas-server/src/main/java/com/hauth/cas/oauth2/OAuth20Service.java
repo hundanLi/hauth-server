@@ -37,6 +37,9 @@ public class OAuth20Service {
     private TokenStorage tokenStorage;
 
     @Autowired
+    private TokenManager tokenManager;
+
+    @Autowired
     private List<TokenRequestHandler> tokenRequestHandlers;
 
     private final Map<String, AuthorizeRequest> authorizeRequestMap = new ConcurrentHashMap<>();
@@ -176,6 +179,9 @@ public class OAuth20Service {
 
 
     public UserProfile userProfile(String accessToken) {
+        if (tokenManager.validateAccessToken(accessToken)==null) {
+            throw new IllegalArgumentException("Invalid access_token: " + accessToken);
+        }
         return tokenStorage.getUserProfileByToken(accessToken);
     }
 }

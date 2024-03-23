@@ -40,6 +40,7 @@ public class AuthorizationCodeTokenRequestHandler extends AbstractTokenRequestHa
         String user = consent.getUser();
         return UserProfile.builder()
                 .id(user)
+                .clientId(accessTokenRequest.getClientId())
                 .principal(user)
                 .attributes(consent.getUserAttributes())
                 .build();
