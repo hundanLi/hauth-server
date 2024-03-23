@@ -173,6 +173,13 @@ public class OAuth20Service {
         if (OAuth20GrantType.GRANT_TYPE_CLIENT_CREDENTIALS.equals(tokenRequest.getGrantType())) {
             return;
         }
+
+        // refresh_token授权
+        if (OAuth20GrantType.GRANT_TYPE_REFRESH_TOKEN.equals(tokenRequest.getGrantType())) {
+            if (tokenRequest.getRefreshToken() == null) {
+                throw new IllegalArgumentException("Invalid refresh_token: " + tokenRequest.getRefreshToken());
+            }
+        }
         throw new IllegalArgumentException("unsupported grant_type: " + tokenRequest.getGrantType());
 
     }
