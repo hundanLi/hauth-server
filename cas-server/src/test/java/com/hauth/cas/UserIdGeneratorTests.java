@@ -34,4 +34,17 @@ public class UserIdGeneratorTests {
         System.out.println(YitIdHelper.nextId());
         System.out.println(YitIdHelper.nextId());
     }
+
+
+    @Test
+    void test() {
+//        int n = 1804289383;
+        int n = 10;
+        int candidate = (int) Math.sqrt((double) 2 * n);
+        if ((candidate * (candidate + 1)) > 2 * n) {
+            System.out.println(candidate - 1);
+        } else {
+            System.out.println(candidate);
+        }
+    }
 }

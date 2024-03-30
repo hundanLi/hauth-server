@@ -30,5 +30,6 @@ public interface ErrorCodeConstant {
     String INVALID_TICKET = "INVALID_TICKET";
     String INVALID_SERVICE = "INVALID_SERVICE";
     String INTERNAL_ERROR = "INTERNAL_ERROR";
+    String INVALID_CREDENTIAL = "INVALID_CREDENTIAL";
 
 }

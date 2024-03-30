@@ -5,6 +5,7 @@ import com.hauth.cas.auth.AuthenticationProvider;
 import com.hauth.cas.auth.AuthenticationType;
 import com.hauth.cas.auth.config.AttributeNames;
 import com.hauth.cas.auth.config.MemoryAuthProperties;
+import com.hauth.cas.constant.ErrorCodeConstant;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -38,7 +39,7 @@ public class MemoryAuthenticationProvider implements AuthenticationProvider {
             return authentication;
         } else {
             authentication.setAuthenticated(false);
-            authentication.setErrorCode("INVALID_CREDENTIAL");
+            authentication.setErrorCode(ErrorCodeConstant.INVALID_CREDENTIAL);
         }
         return authentication;
     }

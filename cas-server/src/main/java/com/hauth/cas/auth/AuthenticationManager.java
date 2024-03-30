@@ -51,7 +51,7 @@ public class AuthenticationManager {
         for (Cookie cookie : cookies) {
             if (Objects.equals(cookie.getName(), AuthenticateConstant.COOKIE_TGC)) {
                 String ticketGrantTicket = ticketStore.getTicketGrantTicket(request.getSession(false).getId());
-                if (ticketGrantTicket != null  && Objects.equals(cookie.getValue(), ticketGrantTicket)) {
+                if (ticketGrantTicket != null && Objects.equals(cookie.getValue(), ticketGrantTicket)) {
                     return ticketGrantTicket;
                 }
             }
@@ -66,7 +66,12 @@ public class AuthenticationManager {
     public Authentication authenticate(Authentication authentication) {
         for (AuthenticationProvider provider : authenticationProviders) {
             if (provider.supports(authentication.getAuthenticationType())) {
-                return provider.authenticate(authentication);
+                long currentTime = System.currentTimeMillis();
+                provider.authenticate(authentication);
+                if (authentication.isAuthenticated()) {
+                    log.info("authenticate success with handler {}, cost time: {}ms", provider.getClass().getSimpleName(), (System.currentTimeMillis() - currentTime));
+                    return authentication;
+                }
             }
         }
         authentication.setAuthenticated(false);

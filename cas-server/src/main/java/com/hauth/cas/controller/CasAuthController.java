@@ -181,7 +181,7 @@ public class CasAuthController {
                 return "Login successfully, ticket=" + serviceTicket;
             }
         } else {
-            return "Login successfully!";
+            return "Login successfully: " + authentication.getPrincipal();
         }
     }
 
